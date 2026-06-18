@@ -8,10 +8,10 @@ const ChatSchema = new Schema({
         ref: "User",
         required: true
     }],
-    messages: [{
-        type: Schema.Types.ObjectId,
-        ref: "Message",
-    }],
+    preview: {
+        type:String,
+        required: true
+    },
     lastUpdate: {
         type: Date,
         default: Date.now

@@ -115,12 +115,11 @@ const searchChatsByUserId = async (req, res) => {
         });
 
         return res.status(200).json({
-            message: "Chat list",
             chatList: formattedList
         });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ serverMessage: "Internal server error" });
     }
 };
 
