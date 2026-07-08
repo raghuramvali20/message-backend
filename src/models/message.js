@@ -28,9 +28,9 @@ const messageSchema = new Schema({
         type: String,
         required: true
     },
-    timeStamp: {
-        type: Date,
-        default: new Date()
+    time: {
+        type: String,
+        default: new Date().toISOString()
     },
     status: {
         type: String,

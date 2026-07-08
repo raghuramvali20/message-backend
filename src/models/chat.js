@@ -13,8 +13,8 @@ const ChatSchema = new Schema({
         required: true
     },
     lastUpdate: {
-        type: Date,
-        default: Date.now
+        type: String,
+        default: new Date()
     }
 });
 const Chat = mongoose.model('Chat', ChatSchema);

@@ -9,16 +9,16 @@ const mongoose = require('mongoose');
 const sendMessage = async (req, res) => {
     const receiverId = req.params.receiverId;
     const senderId = req.userId;
-    const { messageText, date } = req.body;
+    const { messageText, time } = req.body; //time is string in the form of  "2026-06-21T06:25:59.835Z"
 
     if (!receiverId || !mongoose.Types.ObjectId.isValid(receiverId)) {
-        return res.status(400).json({ message: "Invalid receiver id" });
+        return res.status(400).json({ serverMessage: "Invalid receiver id" });
     }
     if (!senderId || !mongoose.Types.ObjectId.isValid(senderId)) {
-        return res.status(400).json({ message: "Invalid sender id" });
+        return res.status(400).json({ serverMessage: "Invalid sender id" });
     }
     if (!text || typeof text !== "string" || text.trim().length === 0) {
-        return res.status(400).json({ message: "Invalid message" });
+        return res.status(400).json({ serverMessage: "Invalid message" });
     }
 
     try {
@@ -26,13 +26,13 @@ const sendMessage = async (req, res) => {
         const sender = await User.findById(senderId);
 
         if (!receiver) {
-            return res.status(404).json({ message: "Receiver does not exist" });
+            return res.status(404).json({ serverMessage: "Receiver does not exist" });
         }
         if (!sender) {
-            return res.status(404).json({ message: "Sender does not exist" });
+            return res.status(404).json({ serverMessage: "Sender does not exist" });
         }
         if (!receiver.publicKey) {
-            return res.status(400).json({ message: "Receiver public key is missing" });
+            return res.status(400).json({ serverMessage: "Receiver public key is missing" });
         }
 
         let chat = await Chat.findOne({
@@ -54,7 +54,7 @@ const sendMessage = async (req, res) => {
             // cipherTextForReceiver,
             // cipherTextForSender,
             messageText,
-            timeStamp: date ? new Date(date) : new Date(),
+            time,
             senderId,
             receiverId
         });
@@ -67,7 +67,7 @@ const sendMessage = async (req, res) => {
         const receiverSocketId = userSockets[receiverId.toString()];
 
         if (receiverSocketId) {
-            getIo().to(receiverSocketId).emit("newMessage", { message: messageDoc });
+            getIo().to(receiverSocketId).emit("newMessage", { serverMessage: messageDoc });
         }
 
         res.status(201).json({
@@ -76,7 +76,7 @@ const sendMessage = async (req, res) => {
         });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ serverMessage: "Internal server error" });
     }
 };
 
@@ -92,7 +92,7 @@ const searchChatsByUserId = async (req, res) => {
     const userId = req.params.userId;
     console.log("api called")
     if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-        return res.status(400).json({ message: "Invalid user id" });
+        return res.status(400).json({ serverMessage: "Invalid user id" });
     }
 
     try {
@@ -104,16 +104,18 @@ const searchChatsByUserId = async (req, res) => {
             })
             .lean();
 
+
         const formattedList = chatList.map(chat => {
             const otherUser = chat.participants[0];
             return {
-                id: chat._id,
+                id: chat._id.toString(),
                 userName: otherUser?.userName || '',
                 profilePic: otherUser?.profilePic || '',
                 receiverId: otherUser?._id?.toString() || ''
             };
         });
-
+        console.log(formattedList)
+    
         return res.status(200).json({
             chatList: formattedList
         });
@@ -129,15 +131,15 @@ const searchChatByChatId = async (req, res) => {
     const userId = req.userId;
 
     if (!chatId || !mongoose.Types.ObjectId.isValid(chatId)) {
-        return res.status(400).json({ message: "Invalid chat id" });
+        return res.status(400).json({ serverMessage: "Invalid chat id" });
     }
 
     try {
         const messages = await Message.find({chatId: chatId}).lean();
-        res.status(200).json({message: "messages fetched", messages});
+        res.status(200).json({serverMessage: "messages fetched", messages});
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ serverMessage: "Internal server error" });
     }
 };
 

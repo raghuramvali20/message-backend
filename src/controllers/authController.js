@@ -4,26 +4,25 @@ const User = require("../models/user");
 const { generateToken } = require("../utils/jwt");
 
 const register = async (req, res) => {
-    const { userName, email, password, publicKey } = req.body;
+    const { userName, email, password } = req.body;
 
     if (!userName || !email || !password || !publicKey) {
-        return res.status(400).json({ message: "Missing required fields" });
+        return res.status(400).json({ serverMessage: "Missing required fields" });
     }
 
     try {
         const existingUser = await User.findOne({ email });
         if (existingUser) {
-            return res.status(400).json({ message: "Email already registered" });
+            return res.status(400).json({ serverMessage: "Email already registered" });
         }
 
         const passwordHash = await bcrypt.hash(password, 10);
-        const user = new User({ userName, email, passwordHash, publicKey });
+        const user = new User({ userName, email, passwordHash});
         await user.save();
 
         const token = generateToken({ id: user._id });
 
         res.status(201).json({
-            message: "Account created successfully",
             token,
             user: {
                 id: user._id,
@@ -33,38 +32,33 @@ const register = async (req, res) => {
         });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ serverMessage: "Internal server error" });
     }
 };
 
 const login = async (req, res) => {
-    console.log("requested")
-    const { email, password, publicKey } = req.body;
+    const {email, password} = req.body;
+     console.log(email + " "+ password + " login request");
 
     if (!email || !password) {
-        return res.status(400).json({ message: "Email and password are required" });
+        return res.status(400).json({ serverMessage: "Email and password are required" });
     }
 
     try {
         const existingUser = await User.findOne({ email });
+        console.log(existingUser);
         if (!existingUser) {
-            return res.status(404).json({ message: "User not found, create new account" });
+            return res.status(404).json({ serverMessage: "User not found, create new account" });
         }
 
         const isMatch = await bcrypt.compare(password, existingUser.passwordHash);
         if (!isMatch) {
-            return res.status(401).json({ message: "Unauthorized, password is incorrect" });
-        }
-
-        if (publicKey) {
-            existingUser.publicKey = publicKey;
-            await existingUser.save();
+            return res.status(401).json({ serverMessage: "Unauthorized, password is incorrect" });
         }
 
         const token = generateToken({ id: existingUser._id });
 
         res.status(200).json({
-            message: "User authorized",
             token,
             user: {
                 id: existingUser._id,
@@ -74,7 +68,7 @@ const login = async (req, res) => {
         });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ serverMessage: "Internal server error" });
     }
 };
 
