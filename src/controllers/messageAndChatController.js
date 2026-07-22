@@ -17,7 +17,7 @@ const sendMessage = async (req, res) => {
     if (!senderId || !mongoose.Types.ObjectId.isValid(senderId)) {
         return res.status(400).json({ serverMessage: "Invalid sender id" });
     }
-    if (!text || typeof text !== "string" || text.trim().length === 0) {
+    if (!messageText || typeof messageText !== "string" || messageText.trim().length === 0) {
         return res.status(400).json({ serverMessage: "Invalid message" });
     }
 
@@ -55,11 +55,11 @@ const sendMessage = async (req, res) => {
             // cipherTextForSender,
             messageText,
             time,
-            senderId,
+            senderId,   
             receiverId
         });
         await messageDoc.save();
-
+        chat.messages ??= [];
         chat.messages.push(messageDoc._id);
         chat.lastUpdate = Date.now();
         await chat.save();
@@ -129,6 +129,8 @@ const searchChatsByUserId = async (req, res) => {
 const searchChatByChatId = async (req, res) => {
     const chatId = req.params.chatId;
     const userId = req.userId;
+
+    console.log("called");
 
     if (!chatId || !mongoose.Types.ObjectId.isValid(chatId)) {
         return res.status(400).json({ serverMessage: "Invalid chat id" });
