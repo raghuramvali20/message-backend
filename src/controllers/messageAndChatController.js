@@ -9,7 +9,7 @@ const mongoose = require('mongoose');
 const sendMessage = async (req, res) => {
     const receiverId = req.params.receiverId;
     const senderId = req.userId;
-    const { messageText, time } = req.body; //time is string in the form of  "2026-06-21T06:25:59.835Z"
+    const { messageText} = req.body; //time is string in the form of  "2026-06-21T06:25:59.835Z"
 
     if (!receiverId || !mongoose.Types.ObjectId.isValid(receiverId)) {
         return res.status(400).json({ serverMessage: "Invalid receiver id" });
@@ -36,13 +36,19 @@ const sendMessage = async (req, res) => {
         }
 
         let chat = await Chat.findOne({
-            participants: { $all: [senderId, receiverId] }
+            participants: { $all: [senderId, receiverId] },
         });
 
         if (!chat) {
             chat = new Chat({
-                participants: [senderId, receiverId]
+                participants: [senderId, receiverId],
+                preview: messageText,
+                lastUpdate: new Date().toISOString()
             });
+            await chat.save();
+        }else {
+            chat.preview = messageText;
+            chat.lastUpdate = new Date().toISOString();
             await chat.save();
         }
 
@@ -54,15 +60,15 @@ const sendMessage = async (req, res) => {
             // cipherTextForReceiver,
             // cipherTextForSender,
             messageText,
-            time,
+            time: new Date().toISOString(),
             senderId,   
             receiverId
         });
         await messageDoc.save();
-        chat.messages ??= [];
-        chat.messages.push(messageDoc._id);
-        chat.lastUpdate = Date.now();
-        await chat.save();
+        // chat.messages ??= [];
+        // chat.messages.push(messageDoc._id);
+        // chat.lastUpdate = Date.now();
+        // await chat.save();
 
         const receiverSocketId = userSockets[receiverId.toString()];
 
@@ -100,7 +106,7 @@ const searchChatsByUserId = async (req, res) => {
             .populate({
                 path: 'participants',
                 match: { _id: { $ne: userId } },
-                select: 'userName profilePic'
+                select: 'userName profilePic preview'
             })
             .lean();
 
@@ -109,9 +115,10 @@ const searchChatsByUserId = async (req, res) => {
             const otherUser = chat.participants[0];
             return {
                 id: chat._id.toString(),
+                preview: chat.preview,
                 userName: otherUser?.userName || '',
                 profilePic: otherUser?.profilePic || '',
-                receiverId: otherUser?._id?.toString() || ''
+                receiverId: otherUser?._id?.toString() || '',
             };
         });
         console.log(formattedList)
