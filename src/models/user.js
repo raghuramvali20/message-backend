@@ -17,10 +17,6 @@ const UserModel = new Schema({
         type: String, 
         required: true
     },
-    publicKey: {
-        type: String,
-        required: true
-    },
     profilePic : {
         type: String
     },

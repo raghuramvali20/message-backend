@@ -37,7 +37,7 @@ const searchByUserName = async (req, res) => {
 
     try {
         const regex = new RegExp(userName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), "i");
-        const users = await User.find({ userName: regex }).select("userName email profilePic");
+        const users = await User.find({ userName: regex }).select("_id userName email profilePic");
 
         if (users.length === 0) {
             return res.status(200).json({ message: "No user available", users });

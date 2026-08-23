@@ -6,7 +6,7 @@ const { generateToken } = require("../utils/jwt");
 const register = async (req, res) => {
     const { userName, email, password } = req.body;
 
-    if (!userName || !email || !password || !publicKey) {
+    if (!userName || !email || !password) {
         return res.status(400).json({ serverMessage: "Missing required fields" });
     }
 
