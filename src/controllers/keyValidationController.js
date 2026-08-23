@@ -8,14 +8,14 @@ const keyValidator = async (req, res) => {
     try{
         const user = await User.findById(userId);
         if(!user){
-            return res.status(404).json({message: "User not exist"});  // ✅ Add return
+            return res.status(404).json({serverMessage: "User not exist"});  // ✅ Add return
         }
         const publicKey = user.publicKey;
         const cipherText = encryptMessage(payload, publicKey);
-        return res.status(200).json({message: "Encrypted successfully", cipherText});  // ✅ Add return
+        return res.status(200).json({serverMessage: "Encrypted successfully", cipherText});  // ✅ Add return
     } catch(err) {  // ✅ Add error parameter
         console.error(err);
-        return res.status(500).json({message: "Internal server error"});  // ✅ Use .status()
+        return res.status(500).json({serverMessage: "Internal server error"});  // ✅ Use .status()
     }
 
 }

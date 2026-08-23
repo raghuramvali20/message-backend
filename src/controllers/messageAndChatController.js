@@ -77,7 +77,6 @@ const sendMessage = async (req, res) => {
         }
 
         res.status(201).json({
-            message: "Message sent",
             messageDoc
         });
     } catch (err) {

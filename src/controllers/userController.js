@@ -4,17 +4,16 @@ const User = require('../models/user');
 const getUserById = async (req, res) => {
     const userId = req.params.id;
     if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-        return res.status(400).json({ message: "Invalid user id" });
+        return res.status(400).json({ serverMessage: "Invalid user id" });
     }
 
     try {
         const fetchedUser = await User.findById(userId);
         if (!fetchedUser) {
-            return res.status(404).json({ message: "No user found" });
+            return res.status(404).json({ serverMessage: "No user found" });
         }
 
         res.status(200).json({
-            message: "Success",
             user: {
                 userName: fetchedUser.userName,
                 email: fetchedUser.email,
@@ -24,7 +23,7 @@ const getUserById = async (req, res) => {
         });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ serverMessage: "Internal server error" });
     }
 };
 
@@ -32,7 +31,7 @@ const searchByUserName = async (req, res) => {
     const userName = req.params.userName;
 
     if (!userName || userName.length < 3) {
-        return res.status(400).json({ message: "Invalid username" });
+        return res.status(400).json({ serverMessage: "Invalid username" });
     }
 
     try {
@@ -40,16 +39,15 @@ const searchByUserName = async (req, res) => {
         const users = await User.find({ userName: regex }).select("_id userName email profilePic");
 
         if (users.length === 0) {
-            return res.status(200).json({ message: "No user available", users });
+            return res.status(200).json({ serverMessage: "No user available", users });
         }
 
         res.status(200).json({
-            message: "Success",
             users
         });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ serverMessage: "Internal server error" });
     }
 };
 
@@ -58,24 +56,24 @@ const blockUser = async (req, res) => {
     const userId = req.userId;
 
     if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-        return res.status(400).json({ message: "Invalid requesting user id" });
+        return res.status(400).json({ serverMessage: "Invalid requesting user id" });
     }
     if (!targetUserId || !mongoose.Types.ObjectId.isValid(targetUserId)) {
-        return res.status(400).json({ message: "Invalid user id" });
+        return res.status(400).json({ serverMessage: "Invalid user id" });
     }
     if (userId === targetUserId) {
-        return res.status(400).json({ message: "Cannot block yourself" });
+        return res.status(400).json({ serverMessage: "Cannot block yourself" });
     }
 
     try {
         const user = await User.findById(userId);
         if (!user) {
-            return res.status(404).json({ message: "Requesting user not found" });
+            return res.status(404).json({ serverMessage: "Requesting user not found" });
         }
 
         const targetUser = await User.findById(targetUserId);
         if (!targetUser) {
-            return res.status(404).json({ message: "User to block not found" });
+            return res.status(404).json({ serverMessage: "User to block not found" });
         }
 
         if (!user.blockedUsers.includes(targetUserId)) {
@@ -83,10 +81,10 @@ const blockUser = async (req, res) => {
             await user.save();
         }
 
-        res.status(200).json({ message: "User blocked successfully" });
+        res.status(200).json({ serverMessage: "User blocked successfully" });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ serverMessage: "Internal server error" });
     }
 };
 
@@ -95,10 +93,10 @@ const unblockUser = async (req, res) => {
     const userId = req.userId;
 
     if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-        return res.status(400).json({ message: "Invalid requesting user id" });
+        return res.status(400).json({ serverMessage: "Invalid requesting user id" });
     }
     if (!targetUserId || !mongoose.Types.ObjectId.isValid(targetUserId)) {
-        return res.status(400).json({ message: "Invalid user id" });
+        return res.status(400).json({ serverMessage: "Invalid user id" });
     }
 
     try {
@@ -108,17 +106,17 @@ const unblockUser = async (req, res) => {
         );
 
         if (result.matchedCount === 0) {
-            return res.status(404).json({ message: "Requesting user not found" });
+            return res.status(404).json({ serverMessage: "Requesting user not found" });
         }
 
         if (result.modifiedCount === 0) {
-            return res.status(200).json({ message: "User was not blocked" });
+            return res.status(200).json({ serverMessage: "User was not blocked" });
         }
 
-        res.status(200).json({ message: "User unblocked successfully" });
+        res.status(200).json({ serverMessage: "User unblocked successfully" });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ serverMessage: "Internal server error" });
     }
 };
 
