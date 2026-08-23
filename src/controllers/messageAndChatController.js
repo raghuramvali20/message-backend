@@ -17,8 +17,8 @@ const sendMessage = async (req, res) => {
     if (!senderId || !mongoose.Types.ObjectId.isValid(senderId)) {
         return res.status(400).json({ serverMessage: "Invalid sender id" });
     }
-    if (!messageText || typeof messageText !== "string" || messageText.trim().length === 0) {
-        return res.status(400).json({ serverMessage: "Invalid message" });
+    if (!messageText || typeof messageText !== "string" || messageText.trim().length === 0 || messageText.trim().length > 5000) {
+        return res.status(400).json({ serverMessage: "Message text is required and must be between 1-5000 characters" });
     }
 
     try {
