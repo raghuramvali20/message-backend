@@ -4,6 +4,7 @@ const Message = require('../models/message');
 const User = require('../models/user');
 const { getIo } = require('../../socket');
 const { userSockets } = require('../sockets');
+const { enrichMessagePayload, buildDisplayDate } = require('../utils/dateTimeFormatter');
 
 const sendMessage = async ({ senderId, receiverId, messageText }) => {
     if (!receiverId || !mongoose.Types.ObjectId.isValid(receiverId)) {
@@ -63,11 +64,13 @@ const sendMessage = async ({ senderId, receiverId, messageText }) => {
     await messageDoc.save();
 
     const receiverSocketId = userSockets[receiverId.toString()];
+    const formattedMessageDoc = enrichMessagePayload(messageDoc.toObject ? messageDoc.toObject() : messageDoc);
+
     if (receiverSocketId) {
-        getIo().to(receiverSocketId).emit('newMessage', { serverMessage: messageDoc });
+        getIo().to(receiverSocketId).emit('newMessage', { serverMessage: formattedMessageDoc });
     }
 
-    return { messageDoc };
+    return { messageDoc: formattedMessageDoc };
 };
 
 const searchChatsByUserId = async (userId) => {
@@ -87,12 +90,19 @@ const searchChatsByUserId = async (userId) => {
 
     const formattedList = chatList.map(chat => {
         const otherUser = chat.participants[0];
+        const displayInfo = buildDisplayDate(chat.lastUpdate);
+
         return {
             id: chat._id.toString(),
             preview: chat.preview,
             userName: otherUser?.userName || '',
             profilePic: otherUser?.profilePic || '',
-            receiverId: otherUser?._id?.toString() || ''
+            receiverId: otherUser?._id?.toString() || '',
+            lastUpdate: chat.lastUpdate,
+            formattedTime: displayInfo.formattedTime,
+            formattedDate: displayInfo.formattedDate,
+            dateGroup: displayInfo.dateGroup,
+            displayLabel: displayInfo.displayLabel
         };
     });
 
@@ -107,7 +117,8 @@ const searchChatByChatId = async ({ chatId, userId }) => {
     }
 
     const messages = await Message.find({ chatId }).lean();
-    return { serverMessage: 'messages fetched', messages };
+    const formattedMessages = messages.map(message => enrichMessagePayload(message));
+    return { serverMessage: 'messages fetched', messages: formattedMessages };
 };
 
 module.exports = {
