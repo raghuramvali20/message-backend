@@ -20,6 +20,14 @@ const UserModel = new Schema({
     profilePic : {
         type: String
     },
+    online: {
+        type: Boolean,
+        default: false,
+    },
+    lastSeen: {
+        type: Date,
+        default: null,
+    },
     blockedUsers: [{
         type: Schema.Types.ObjectId,
         ref: "User",

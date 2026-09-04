@@ -64,10 +64,21 @@ const sendMessage = async ({ senderId, receiverId, messageText }) => {
     await messageDoc.save();
 
     const receiverSocketId = userSockets[receiverId.toString()];
+    const senderSocketId = userSockets[senderId.toString()];
     const formattedMessageDoc = enrichMessagePayload(messageDoc.toObject ? messageDoc.toObject() : messageDoc);
 
     if (receiverSocketId) {
         getIo().to(receiverSocketId).emit('newMessage', { serverMessage: formattedMessageDoc });
+    }
+
+    if (senderSocketId) {
+        getIo().to(senderSocketId).emit('message_received', {
+            messageId: messageDoc._id.toString(),
+            chatId: chat._id.toString(),
+            senderId: senderId.toString(),
+            receiverId: receiverId.toString(),
+            status: 'received',
+        });
     }
 
     return { messageDoc: formattedMessageDoc };
@@ -84,7 +95,7 @@ const searchChatsByUserId = async (userId) => {
         .populate({
             path: 'participants',
             match: { _id: { $ne: userId } },
-            select: 'userName profilePic preview'
+            select: 'userName profilePic online lastSeen'
         })
         .lean();
 
@@ -98,6 +109,8 @@ const searchChatsByUserId = async (userId) => {
             userName: otherUser?.userName || '',
             profilePic: otherUser?.profilePic || '',
             receiverId: otherUser?._id?.toString() || '',
+            online: otherUser?.online || false,
+            lastSeen: otherUser?.lastSeen || null,
             lastUpdate: chat.lastUpdate,
             formattedTime: displayInfo.formattedTime,
             formattedDate: displayInfo.formattedDate,
