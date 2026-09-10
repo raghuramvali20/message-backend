@@ -10,8 +10,10 @@ const server = http.createServer(app)
 
 initSocket(server)
 
-server.listen(3000, () => {
-    console.log("running")
+const port = Number(process.env.PORT || 3000)
+
+server.listen(port, () => {
+    console.log(`running on port ${port}`)
 })
 
 module.exports = server

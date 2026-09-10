@@ -1,5 +1,6 @@
 const User = require('../models/user');
 const Message = require('../models/message');
+const Chat = require('../models/chat');
 
 const userSockets = {}; 
 /* userSockets = {
@@ -9,7 +10,7 @@ const userSockets = {};
 
 const socketsEvents = (socket, io) => {
     socket.on("connect_user", async (userId) => {
-        if (!userId) return;
+        if (!userId || !await User.exists({ _id: userId })) return;
 
         userSockets[userId] = socket.id;
         socket.userId = userId;
@@ -81,18 +82,28 @@ const socketsEvents = (socket, io) => {
 
     socket.on('message_seen', async ({ messageId, chatId, userId, senderId }) => {
         if (!messageId || !chatId || !userId || !senderId) return;
+        if (socket.userId !== userId) return;
 
-        await Message.findByIdAndUpdate(messageId, {
+        const chat = await Chat.findOne({ _id: chatId, participants: userId }).select('_id');
+        if (!chat) return;
+
+        const message = await Message.findOneAndUpdate({
+            _id: messageId,
+            chatId,
+            receiverId: userId,
+            senderId
+        }, {
             status: 'seen',
-        });
+        }, { new: true });
+        if (!message) return;
 
-        const senderSocketId = userSockets[senderId];
+        const senderSocketId = userSockets[message.senderId.toString()];
         if (senderSocketId) {
             io.to(senderSocketId).emit('message_seen', {
                 messageId,
                 chatId,
                 userId,
-                senderId,
+                senderId: message.senderId.toString(),
                 status: 'seen',
             });
         }
