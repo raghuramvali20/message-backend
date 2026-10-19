@@ -1,4 +1,5 @@
 const bcrypt = require('bcrypt');
+const mongoose = require('mongoose');
 const User = require('../models/user');
 const { generateToken } = require('../utils/jwt');
 
@@ -65,4 +66,31 @@ const loginUser = async ({ email, password }) => {
     };
 };
 
-module.exports = { registerUser, loginUser };
+const getUser = async (userId) => {
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+        const error = new Error('Invalid user id');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    const user = await User.findById(userId).select('-passwordHash');
+    if (!user) {
+        const error = new Error('User not found');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    return {
+        user: {
+            id: user._id,
+            userName: user.userName,
+            email: user.email,
+            profilePic: user.profilePic,
+            online: user.online,
+            lastSeen: user.lastSeen,
+            blockedUsers: user.blockedUsers
+        }
+    };
+};
+
+module.exports = { registerUser, loginUser, getUser };
